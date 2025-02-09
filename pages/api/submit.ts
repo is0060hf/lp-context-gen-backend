@@ -1,8 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient } from '../../lib/dynamodb';
-import { formSchema } from '../../lib/schema';
-import { ApiResponse } from '../../lib/types';
+import { ApiResponse, FormData } from '../../lib/types';
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,17 +16,25 @@ export default async function handler(
   }
 
   try {
-    // Request body validation
-    const validationResult = formSchema.safeParse(req.body);
-    
-    if (!validationResult.success) {
+    // リクエストボディのバリデーション
+    const body = req.body;
+    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
       return res.status(400).json({
         success: false,
-        error: validationResult.error.errors[0].message
+        error: 'Invalid request body format'
       });
     }
 
-    const formData = validationResult.data;
+    // すべての値が文字列であることを確認
+    const isValid = Object.entries(body).every(([_, value]) => typeof value === 'string');
+    if (!isValid) {
+      return res.status(400).json({
+        success: false,
+        error: 'All values must be strings'
+      });
+    }
+
+    const formData: FormData = body;
 
     // Prepare DynamoDB item
     const item = {

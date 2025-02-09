@@ -1,7 +1,5 @@
 export interface FormData {
-  name: string;
-  email: string;
-  message: string;
+  [key: string]: string;
 }
 
 export interface ApiResponse {
